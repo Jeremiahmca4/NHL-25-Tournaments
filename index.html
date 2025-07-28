@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NHL 25 Tournament Manager</title>
+    <!--
+      This web application allows team captains to register their NHL 25
+      teams and tournament organisers to create single‑elimination
+      tournaments with up to 16 teams. Registered teams can be
+      selected when creating a tournament and a bracket is
+      automatically generated. All logic is handled client‑side and
+      persists across page reloads using localStorage.
+    -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>NHL 25 Tournament Manager</h1>
+    </header>
+    <main>
+      <!-- Team registration section -->
+      <section id="team-registration" class="card">
+        <h2>Register a Team</h2>
+        <form id="teamForm">
+          <div class="form-row">
+            <label for="teamName">Team Name</label>
+            <input type="text" id="teamName" required placeholder="Enter team name" />
+          </div>
+          <div class="form-row">
+            <label for="captainGamertag">Captain Gamertag</label>
+            <input
+              type="text"
+              id="captainGamertag"
+              required
+              placeholder="Captain gamertag"
+            />
+          </div>
+          <div class="form-row">
+            <label for="captainEmail">Captain Email</label>
+            <input
+              type="email"
+              id="captainEmail"
+              required
+              placeholder="Captain email"
+            />
+          </div>
+          <div id="playersContainer">
+            <h3>Players (max 15)</h3>
+            <!-- Player rows will be appended here dynamically -->
+          </div>
+          <div class="form-actions">
+            <button type="button" id="addPlayerBtn">Add Player</button>
+            <button type="submit">Register Team</button>
+          </div>
+        </form>
+        <div id="teamsList">
+          <h3>Registered Teams</h3>
+          <ul id="teamListUl"></ul>
+        </div>
+      </section>
+
+      <!-- Tournament creation section -->
+      <section id="tournament-section" class="card">
+        <h2>Create Tournament</h2>
+        <form id="tournamentForm">
+          <div class="form-row">
+            <label for="tournamentName">Tournament Name</label>
+            <input
+              type="text"
+              id="tournamentName"
+              required
+              placeholder="Enter tournament name"
+            />
+          </div>
+          <div id="teamSelection">
+            <h3>Select Teams (max 16)</h3>
+            <!-- Team checkboxes generated dynamically -->
+          </div>
+          <div class="form-actions">
+            <button type="submit">Create Tournament</button>
+          </div>
+        </form>
+        <div id="bracketContainer"></div>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
