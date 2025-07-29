@@ -17,10 +17,57 @@
   <body>
     <header>
       <h1>NHL 25 Tournament Manager</h1>
+      <!-- Container to display user info and logout link -->
+      <div id="user-info" style="margin-top: 10px; color: #64ffda;"></div>
     </header>
     <main>
-      <!-- Team registration section -->
-      <section id="team-registration" class="card">
+      <!-- Authentication section: login and sign‑up -->
+      <section id="auth-section" class="card">
+        <div id="login-container">
+          <h2>Login</h2>
+          <form id="loginForm">
+            <div class="form-row">
+              <label for="loginUsername">Username</label>
+              <input type="text" id="loginUsername" required placeholder="Enter username" />
+            </div>
+            <div class="form-row">
+              <label for="loginPassword">Password</label>
+              <input type="password" id="loginPassword" required placeholder="Enter password" />
+            </div>
+            <div class="form-actions">
+              <button type="submit">Login</button>
+            </div>
+          </form>
+        </div>
+        <div id="signup-container">
+          <h2>Sign Up</h2>
+          <form id="signupForm">
+            <div class="form-row">
+              <label for="signupUsername">Username</label>
+              <input type="text" id="signupUsername" required placeholder="Choose a username" />
+            </div>
+            <div class="form-row">
+              <label for="signupEmail">Email</label>
+              <input type="email" id="signupEmail" required placeholder="Enter email" />
+            </div>
+            <div class="form-row">
+              <label for="signupPassword">Password</label>
+              <input type="password" id="signupPassword" required placeholder="Choose a password" />
+            </div>
+            <!-- Admin sign up code. If you have a special admin code, enter it here to create an admin account. -->
+            <div class="form-row" id="adminCodeRow">
+              <label for="adminCode">Admin Code (optional)</label>
+              <input type="text" id="adminCode" placeholder="Enter admin code" />
+            </div>
+            <div class="form-actions">
+              <button type="submit">Sign Up</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Team registration section (hidden until a non‑admin user logs in) -->
+      <section id="team-registration" class="card" style="display:none;">
         <h2>Register a Team</h2>
         <form id="teamForm">
           <div class="form-row">
@@ -29,21 +76,11 @@
           </div>
           <div class="form-row">
             <label for="captainGamertag">Captain Gamertag</label>
-            <input
-              type="text"
-              id="captainGamertag"
-              required
-              placeholder="Captain gamertag"
-            />
+            <input type="text" id="captainGamertag" required placeholder="Captain gamertag" />
           </div>
           <div class="form-row">
             <label for="captainEmail">Captain Email</label>
-            <input
-              type="email"
-              id="captainEmail"
-              required
-              placeholder="Captain email"
-            />
+            <input type="email" id="captainEmail" required placeholder="Captain email" />
           </div>
           <div id="playersContainer">
             <h3>Players (max 15)</h3>
@@ -61,27 +98,26 @@
       </section>
 
       <!-- Tournament creation section -->
-      <section id="tournament-section" class="card">
+      <section id="tournament-section" class="card" style="display:none;">
         <h2>Create Tournament</h2>
         <form id="tournamentForm">
           <div class="form-row">
             <label for="tournamentName">Tournament Name</label>
-            <input
-              type="text"
-              id="tournamentName"
-              required
-              placeholder="Enter tournament name"
-            />
+            <input type="text" id="tournamentName" required placeholder="Enter tournament name" />
           </div>
-          <div id="teamSelection">
-            <h3>Select Teams (max 16)</h3>
-            <!-- Team checkboxes generated dynamically -->
-          </div>
+          <!-- Note for admins: no team selection here. Captains will join after the tournament is created. -->
+          <p id="tournamentInfo" style="color:#a3aed0; margin-bottom: 1rem;">
+            Once a tournament is created, captains will be able to register their teams for it. The bracket will
+            automatically update as teams join.
+          </p>
           <div class="form-actions">
             <button type="submit">Create Tournament</button>
           </div>
         </form>
+        <!-- Container where brackets for the active tournament will be rendered -->
         <div id="bracketContainer"></div>
+        <!-- Container to show available tournaments and join buttons for captains -->
+        <div id="joinTournaments"></div>
       </section>
     </main>
     <script src="script.js"></script>
