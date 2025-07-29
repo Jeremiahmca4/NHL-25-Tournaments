@@ -28,6 +28,10 @@
   let teams = [];
   // Array of tournaments; only the latest is currently displayed
   let tournaments = [];
+  // Interval ID for countdown timers. Cleared when a new bracket is displayed.
+  let countdownIntervalId = null;
+  // List of codes that can be used to create additional admin accounts. Codes are single‑use.
+  let adminCodes = [];
 
   // ------------------ DOM references ------------------
   const authSection = document.getElementById("auth-section");
@@ -51,6 +55,12 @@
   const bracketContainer = document.getElementById("bracketContainer");
   // Container for join tournament controls (added for captains to join tournaments)
   const joinTournamentsDiv = document.getElementById("joinTournaments");
+  // Admin settings elements
+  const adminSettingsSection = document.getElementById("admin-settings");
+  const generateAdminCodeBtn = document.getElementById("generateAdminCodeBtn");
+  const adminCodesList = document.getElementById("adminCodesList");
+  // Tournament start date/time input
+  const tournamentStartTimeInput = document.getElementById("tournamentStartTime");
 
   // ------------------ Persistence helpers ------------------
   // Users persistence
@@ -116,6 +126,25 @@
     localStorage.setItem("nhl25Tournaments", JSON.stringify(tournaments));
   }
 
+  // Admin codes persistence
+  function loadAdminCodes() {
+    const saved = localStorage.getItem("nhl25AdminCodes");
+    if (saved) {
+      try {
+        adminCodes = JSON.parse(saved);
+      } catch (err) {
+        adminCodes = [];
+      }
+    } else {
+      // Initialise with the default admin code on first load
+      adminCodes = [ADMIN_CODE];
+      saveAdminCodes();
+    }
+  }
+  function saveAdminCodes() {
+    localStorage.setItem("nhl25AdminCodes", JSON.stringify(adminCodes));
+  }
+
   // ------------------ UI helpers ------------------
   // Toggle between login and sign‑up forms
   function toggleAuthForms(showLogin) {
@@ -129,9 +158,14 @@
   }
   // Update the page based on the current user's status
   function updateUI() {
-    // If an admin already exists, hide the admin code field for new sign‑ups
-    const adminExists = users.some((u) => u.isAdmin);
-    if (adminCodeRow) adminCodeRow.style.display = adminExists ? "none" : "";
+    // Show the admin code field for sign‑ups only if there are unused codes
+    if (adminCodeRow) {
+      if (adminCodes && adminCodes.length > 0) {
+        adminCodeRow.style.display = "";
+      } else {
+        adminCodeRow.style.display = "none";
+      }
+    }
 
     if (!currentUser) {
       // No user logged in
@@ -199,6 +233,8 @@
         renderJoinTournaments();
       }
     }
+    // Update admin settings visibility and list
+    setupAdminSettingsUI();
   }
 
   // ------------------ Authentication handlers ------------------
@@ -214,15 +250,18 @@
       alert("An account with this email already exists.");
       return;
     }
-    // Determine if this should be an admin account
+    // Determine if this should be an admin account. An admin account is created
+    // only if the provided code matches an unused admin code. Codes are single‑use.
     let isAdmin = false;
-    if (adminCodeInput && adminCodeInput.trim() === ADMIN_CODE) {
-      // Only allow one admin
-      if (users.some((u) => u.isAdmin)) {
-        alert("An admin account already exists.");
-        return;
+    if (adminCodeInput) {
+      const trimmed = adminCodeInput.trim();
+      const codeIndex = adminCodes.findIndex((c) => c === trimmed);
+      if (codeIndex >= 0) {
+        isAdmin = true;
+        // Remove used code
+        adminCodes.splice(codeIndex, 1);
+        saveAdminCodes();
       }
-      isAdmin = true;
     }
     const user = {
       id: Date.now(),
@@ -366,6 +405,70 @@
   // Initialise results for each match
   function initResults(bracket) {
     return bracket.map((roundMatches) => roundMatches.map(() => null));
+  }
+
+  // ------------------ Admin code management ------------------
+  /**
+   * Generate a random alphanumeric admin code. Codes are 8 characters long and
+   * exclude ambiguous characters. Generated codes are added to the adminCodes
+   * array and saved to localStorage.
+   * @returns {string} The generated code.
+   */
+  function generateAdminCode() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    adminCodes.push(code);
+    saveAdminCodes();
+    return code;
+  }
+
+  /**
+   * Render the list of unused admin codes into the adminCodesList element. Each
+   * code is displayed in a `<code>` tag for easy copying.
+   */
+  function renderAdminCodes() {
+    if (!adminCodesList) return;
+    adminCodesList.innerHTML = "";
+    if (!adminCodes || adminCodes.length === 0) {
+      adminCodesList.innerHTML = "<p>No admin codes available. Generate a new one.</p>";
+      return;
+    }
+    const ul = document.createElement("ul");
+    adminCodes.forEach((code) => {
+      const li = document.createElement("li");
+      const codeElem = document.createElement("code");
+      codeElem.textContent = code;
+      li.appendChild(codeElem);
+      ul.appendChild(li);
+    });
+    adminCodesList.appendChild(ul);
+  }
+
+  /**
+   * Show or hide the admin settings section based on the current user's role.
+   * Attach an event listener to the generate button to produce a new admin
+   * code and refresh the list when clicked.
+   */
+  function setupAdminSettingsUI() {
+    if (!adminSettingsSection) return;
+    if (currentUser && currentUser.isAdmin) {
+      adminSettingsSection.style.display = "";
+      // Render codes
+      renderAdminCodes();
+      // Attach button handler if not already attached
+      if (generateAdminCodeBtn) {
+        generateAdminCodeBtn.onclick = () => {
+          const newCode = generateAdminCode();
+          renderAdminCodes();
+          alert(`New admin code generated: ${newCode}`);
+        };
+      }
+    } else {
+      adminSettingsSection.style.display = "none";
+    }
   }
 
   // ------------------ Join tournament helpers ------------------
@@ -514,6 +617,42 @@
     title.textContent = `Bracket: ${name}`;
     title.style.color = "#64ffda";
     if (bracketContainer) bracketContainer.appendChild(title);
+    // Show countdown if start time is defined
+    if (tournament.startTime) {
+      const countdownEl = document.createElement("p");
+      countdownEl.style.color = "#a3aed0";
+      countdownEl.style.marginBottom = "0.5rem";
+      if (bracketContainer) bracketContainer.appendChild(countdownEl);
+      // Clear any previous interval
+      if (countdownIntervalId) {
+        clearInterval(countdownIntervalId);
+        countdownIntervalId = null;
+      }
+      const updateCountdown = () => {
+        const now = Date.now();
+        const diff = tournament.startTime - now;
+        if (diff <= 0) {
+          countdownEl.textContent = "Tournament started!";
+          if (countdownIntervalId) {
+            clearInterval(countdownIntervalId);
+            countdownIntervalId = null;
+          }
+          return;
+        }
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        const parts = [];
+        if (days > 0) parts.push(`${days}d`);
+        if (hours > 0 || days > 0) parts.push(`${hours}h`);
+        if (minutes > 0 || hours > 0 || days > 0) parts.push(`${minutes}m`);
+        parts.push(`${seconds}s`);
+        countdownEl.textContent = `Starts in: ${parts.join(" ")}`;
+      };
+      updateCountdown();
+      countdownIntervalId = setInterval(updateCountdown, 1000);
+    }
     // If no bracket yet (less than two teams)
     if (!bracket || bracket.length === 0) {
       const msg = document.createElement("p");
@@ -765,10 +904,22 @@
         alert("Please provide a tournament name.");
         return;
       }
+      // Require a start date/time
+      const startStr = tournamentStartTimeInput ? tournamentStartTimeInput.value : "";
+      if (!startStr) {
+        alert("Please select a start date and time for the tournament.");
+        return;
+      }
+      const startTimestamp = new Date(startStr).getTime();
+      if (isNaN(startTimestamp) || startTimestamp <= Date.now()) {
+        alert("Please select a future date and time.");
+        return;
+      }
       // Create an empty tournament. Teams will join later via joinTournament().
       const tournament = {
         id: Date.now(),
         name: tournamentName,
+        startTime: startTimestamp,
         teamIds: [],
         maxTeams: 16,
         bracket: [],
@@ -779,7 +930,7 @@
       saveTournaments();
       // Clear form and update UI
       if (tournamentForm) tournamentForm.reset();
-      // Display an empty bracket message
+      // Display an empty bracket message and countdown
       displayBracket(tournament);
       // Render join options for captains
       renderJoinTournaments();
@@ -790,6 +941,7 @@
   loadCurrentUser();
   loadTeams();
   loadTournaments();
+  loadAdminCodes();
   // Ensure at least one blank player row exists
   if (playersContainer) {
     resetPlayerFields();
