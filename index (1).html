@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reggy Sosa's Chel Tourney Registration</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Reggy Sosa's Chel Tourney Registration</h1>
+    <div id="user-info" style="margin-top: 10px; color: #64ffda;"></div>
+  </header>
+
+  <main>
+    <section id="auth-section" class="card">
+      <div id="login-container">
+        <h2>Login</h2>
+        <form id="loginForm">
+          <div class="form-row">
+            <label for="loginUsername">Email</label>
+            <input type="text" id="loginUsername" required />
+          </div>
+          <div class="form-row">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" required />
+          </div>
+          <div class="form-actions">
+            <button type="submit">Login</button>
+          </div>
+        </form>
+      </div>
+      <div id="signup-container">
+        <h2>Sign Up</h2>
+        <form id="signupForm">
+          <div class="form-row">
+            <label for="signupUsername">Username</label>
+            <input type="text" id="signupUsername" required />
+          </div>
+          <div class="form-row">
+            <label for="signupEmail">Email</label>
+            <input type="email" id="signupEmail" required />
+          </div>
+          <div class="form-row">
+            <label for="signupPassword">Password</label>
+            <input type="password" id="signupPassword" required />
+          </div>
+          <div class="form-row">
+            <label for="adminCode">Admin Code (optional)</label>
+            <input type="text" id="adminCode" />
+          </div>
+          <div class="form-actions">
+            <button type="submit">Sign Up</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="tournament-section" class="card" style="display:none;">
+      <h2>Create Tournament</h2>
+      <form id="createTournamentForm">
+        <div class="form-row">
+          <label for="tournamentName">Tournament Name</label>
+          <input type="text" id="tournamentName" required />
+        </div>
+        <div class="form-actions">
+          <button type="submit">Create Tournament</button>
+        </div>
+      </form>
+      <div>
+        <h3>Current Tournaments</h3>
+        <ul id="tournamentList"></ul>
+      </div>
+    </section>
+
+    <section id="team-registration" class="card" style="display:none;">
+      <h2>Register Team</h2>
+      <form id="registerTeamForm">
+        <div class="form-row">
+          <label for="teamName">Team Name</label>
+          <input type="text" id="teamName" required />
+        </div>
+        <div class="form-row">
+          <label for="gamertags">Gamertags (comma separated)</label>
+          <input type="text" id="gamertags" placeholder="e.g. player1, player2, player3" required />
+        </div>
+        <div class="form-row">
+          <label for="tournamentSelect">Select Tournament</label>
+          <select id="tournamentSelect" required></select>
+        </div>
+        <div class="form-actions">
+          <button type="submit">Register Team</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="admin-settings" class="card" style="display:none;">
+      <h2>Admin Controls</h2>
+      <form id="generateCodeForm">
+        <button type="submit">Generate Admin Code</button>
+      </form>
+      <div>
+        <h3>All Teams</h3>
+        <ul id="teamList"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
