@@ -1,5 +1,3 @@
-// Full Client-side Logic for NHL 25 Tournament Platform
-
 const apiBase = "https://nhl25-backend.onrender.com/api";
 const messageDiv = document.createElement("div");
 messageDiv.id = "message";
@@ -16,8 +14,7 @@ function showMessage(msg, type = "success") {
 
 function decodeToken(token) {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload;
+    return JSON.parse(atob(token.split('.')[1]));
   } catch {
     return null;
   }
@@ -36,166 +33,117 @@ function logout() {
   location.reload();
 }
 
-async function fetchWithAuth(url, options = {}) {
+document.addEventListener("DOMContentLoaded", () => {
   const token = getToken();
-  if (!token) throw new Error("Not logged in");
-  return await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token,
-      ...(options.headers || {})
+  const user = token ? decodeToken(token) : null;
+
+  const loginForm = document.getElementById("login-form");
+  const registerForm = document.getElementById("register-form");
+  const logoutBtn = document.getElementById("logout-btn");
+  const adminPanel = document.getElementById("admin-panel");
+  const userPanel = document.getElementById("user-panel");
+  const tournamentForm = document.getElementById("tournament-form");
+  const teamForm = document.getElementById("team-form");
+  const tournamentSelect = document.getElementById("tournament-select");
+
+  if (user) {
+    loginForm.style.display = "none";
+    registerForm.style.display = "none";
+    logoutBtn.style.display = "block";
+    userPanel.style.display = "block";
+
+    if (user.isAdmin) {
+      adminPanel.style.display = "block";
+    }
+
+    fetch(`${apiBase}/tournaments`)
+      .then(res => res.json())
+      .then(tournaments => {
+        tournamentSelect.innerHTML = tournaments.map(t => `<option value="${t._id}">${t.name}</option>`).join("");
+      });
+  }
+
+  registerForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("reg-email").value;
+    const password = document.getElementById("reg-password").value;
+    const adminCode = document.getElementById("reg-admincode").value;
+
+    const res = await fetch(`${apiBase}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, adminCode })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showMessage("Registered! Now log in.");
+    } else {
+      showMessage(data.error || "Registration failed", "error");
     }
   });
-}
 
-document.addEventListener("DOMContentLoaded", () => {
-  const signupForm = document.getElementById("signupForm");
-  const loginForm = document.getElementById("loginForm");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const tournamentForm = document.getElementById("createTournamentForm");
-  const teamForm = document.getElementById("registerTeamForm");
-  const codeGenForm = document.getElementById("generateCodeForm");
-  const tournamentSelect = document.getElementById("tournamentSelect");
-  const tournamentList = document.getElementById("tournamentList");
-  const teamList = document.getElementById("teamList");
-
-  async function handleSignup(e) {
+  loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const username = document.getElementById("signupUsername").value.trim();
-    const email = document.getElementById("signupEmail").value.trim();
-    const password = document.getElementById("signupPassword").value.trim();
-    const adminCode = document.getElementById("adminCode").value.trim();
-    try {
-      const res = await fetch(`${apiBase}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password, adminCode })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Signup failed");
-      showMessage("Signed up! Please log in.", "success");
-    } catch (err) {
-      showMessage(err.message, "error");
-    }
-  }
+    const email = document.getElementById("log-email").value;
+    const password = document.getElementById("log-password").value;
 
-  async function handleLogin(e) {
-    e.preventDefault();
-    const email = document.getElementById("loginUsername").value.trim();
-    const password = document.getElementById("loginPassword").value.trim();
-    try {
-      const res = await fetch(`${apiBase}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed");
+    const res = await fetch(`${apiBase}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (res.ok) {
       saveToken(data.token);
-      renderDashboard();
-    } catch (err) {
-      showMessage(err.message, "error");
-    }
-  }
-
-  async function renderDashboard() {
-    const token = getToken();
-    if (!token) return;
-    const decoded = decodeToken(token);
-    if (!decoded) return;
-
-    document.getElementById("auth-section").style.display = "none";
-    document.getElementById("user-info").innerHTML = \`Logged in as: \${decoded.id} <button onclick="logout()">Logout</button>\`;
-
-    loadTournaments();
-
-    if (decoded.isAdmin) {
-      document.getElementById("tournament-section").style.display = "block";
-      document.getElementById("admin-settings").style.display = "block";
-      loadTeams();
+      location.reload();
     } else {
-      document.getElementById("team-registration").style.display = "block";
+      showMessage(data.error || "Login failed", "error");
     }
-  }
+  });
 
-  async function loadTournaments() {
-    try {
-      const res = await fetch(`${apiBase}/tournaments`);
-      const tournaments = await res.json();
-      tournamentList.innerHTML = tournaments.map(t => `<li>${t.name}</li>`).join("");
-      tournamentSelect.innerHTML = tournaments.map(t => `<option value="${t._id}">${t.name}</option>`).join("");
-    } catch {
-      showMessage("Failed to load tournaments", "error");
-    }
-  }
+  logoutBtn.addEventListener("click", logout);
 
-  async function loadTeams() {
-    try {
-      const res = await fetchWithAuth(`${apiBase}/teams`);
-      const teams = await res.json();
-      teamList.innerHTML = teams.map(t => `<li>${t.teamName} (Captain: ${t.captainEmail})</li>`).join("");
-    } catch {
-      showMessage("Failed to load teams", "error");
-    }
-  }
-
-  async function handleTournamentCreate(e) {
+  tournamentForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const name = document.getElementById("tournamentName").value.trim();
-    try {
-      const res = await fetchWithAuth(`${apiBase}/tournaments`, {
-        method: "POST",
-        body: JSON.stringify({ name })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+    const name = document.getElementById("tournament-name").value;
+    const date = document.getElementById("tournament-date").value;
+
+    const res = await fetch(`${apiBase}/tournaments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: getToken()
+      },
+      body: JSON.stringify({ name, date })
+    });
+    const data = await res.json();
+    if (res.ok) {
       showMessage("Tournament created");
-      loadTournaments();
-    } catch (err) {
-      showMessage(err.message, "error");
+      location.reload();
+    } else {
+      showMessage(data.error || "Failed to create", "error");
     }
-  }
+  });
 
-  async function handleTeamRegister(e) {
+  teamForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const teamName = document.getElementById("teamName").value.trim();
+    const teamName = document.getElementById("team-name").value;
+    const gamertag = document.getElementById("team-gamertag").value;
     const tournamentId = tournamentSelect.value;
-    const gamertags = document.getElementById("gamertags").value.trim().split(",").map(g => g.trim());
-    try {
-      const res = await fetchWithAuth(`${apiBase}/teams`, {
-        method: "POST",
-        body: JSON.stringify({ teamName, tournamentId, gamertags })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      showMessage("Team registered");
-      loadTournaments();
-    } catch (err) {
-      showMessage(err.message, "error");
+
+    const res = await fetch(`${apiBase}/register-team`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: getToken()
+      },
+      body: JSON.stringify({ teamName, gamertag, tournamentId })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showMessage("Team registered!");
+    } else {
+      showMessage(data.error || "Failed to register", "error");
     }
-  }
-
-  async function handleCodeGeneration(e) {
-    e.preventDefault();
-    try {
-      const res = await fetchWithAuth(`${apiBase}/generate-admin-code`, {
-        method: "POST",
-        body: JSON.stringify({})
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      showMessage("New admin code: " + data.code);
-    } catch (err) {
-      showMessage(err.message, "error");
-    }
-  }
-
-  if (signupForm) signupForm.addEventListener("submit", handleSignup);
-  if (loginForm) loginForm.addEventListener("submit", handleLogin);
-  if (tournamentForm) tournamentForm.addEventListener("submit", handleTournamentCreate);
-  if (teamForm) teamForm.addEventListener("submit", handleTeamRegister);
-  if (codeGenForm) codeGenForm.addEventListener("submit", handleCodeGeneration);
-
-  renderDashboard();
+  });
 });
