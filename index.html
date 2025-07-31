@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NHL 25 Tournament Manager</title>
+    <!--
+      This web application allows team captains to register their NHL 25
+      teams and tournament organisers to create single‑elimination
+      tournaments with up to 16 teams. Registered teams can be
+      selected when creating a tournament and a bracket is
+      automatically generated. All logic is handled client‑side and
+      persists across page reloads using localStorage.
+    -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <!-- Updated application title as requested. -->
+      <h1>Reggy Sosa's Chel Tourney Registration</h1>
+      <!-- Container to display user info and logout link -->
+      <div id="user-info" style="margin-top: 10px; color: #64ffda;"></div>
+    </header>
+    <main>
+      <!-- Authentication section: login and sign‑up -->
+      <section id="auth-section" class="card">
+        <div id="login-container">
+          <h2>Login</h2>
+          <form id="loginForm">
+            <div class="form-row">
+              <label for="loginUsername">Username</label>
+              <input type="text" id="loginUsername" required placeholder="Enter username" />
+            </div>
+            <div class="form-row">
+              <label for="loginPassword">Password</label>
+              <input type="password" id="loginPassword" required placeholder="Enter password" />
+            </div>
+            <div class="form-actions">
+              <button type="submit">Login</button>
+            </div>
+          </form>
+        </div>
+        <div id="signup-container">
+          <h2>Sign Up</h2>
+          <form id="signupForm">
+            <div class="form-row">
+              <label for="signupUsername">Username</label>
+              <input type="text" id="signupUsername" required placeholder="Choose a username" />
+            </div>
+            <div class="form-row">
+              <label for="signupEmail">Email</label>
+              <input type="email" id="signupEmail" required placeholder="Enter email" />
+            </div>
+            <div class="form-row">
+              <label for="signupPassword">Password</label>
+              <input type="password" id="signupPassword" required placeholder="Choose a password" />
+            </div>
+            <!-- Admin sign up code. If you have a special admin code, enter it here to create an admin account. -->
+            <div class="form-row" id="adminCodeRow">
+              <label for="adminCode">Admin Code (optional)</label>
+              <input type="text" id="adminCode" placeholder="Enter admin code" />
+            </div>
+            <div class="form-actions">
+              <button type="submit">Sign Up</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Team registration section (hidden until a non‑admin user logs in) -->
+      <section id="team-registration" class="card" style="display:none;">
+        <h2>Register a Team</h2>
+        <form id="teamForm">
+          <div class="form-row">
+            <label for="teamName">Team Name</label>
+            <input type="text" id="teamName" required placeholder="Enter team name" />
+          </div>
+          <div class="form-row">
+            <label for="captainGamertag">Captain Gamertag</label>
+            <input type="text" id="captainGamertag" required placeholder="Captain gamertag" />
+          </div>
+          <div class="form-row">
+            <label for="captainEmail">Captain Email</label>
+            <input type="email" id="captainEmail" required placeholder="Captain email" />
+          </div>
+          <div id="playersContainer">
+            <h3>Players (max 15)</h3>
+            <!-- Player rows will be appended here dynamically -->
+          </div>
+          <div class="form-actions">
+            <button type="button" id="addPlayerBtn">Add Player</button>
+            <button type="submit">Register Team</button>
+          </div>
+        </form>
+        <div id="teamsList">
+          <h3>Registered Teams</h3>
+          <ul id="teamListUl"></ul>
+        </div>
+      </section>
+
+      <!-- Tournament creation section -->
+      <section id="tournament-section" class="card" style="display:none;">
+        <h2>Create Tournament</h2>
+        <form id="tournamentForm">
+          <div class="form-row">
+            <label for="tournamentName">Tournament Name</label>
+            <input type="text" id="tournamentName" required placeholder="Enter tournament name" />
+          </div>
+          <div class="form-row">
+            <label for="tournamentStartTime">Start Date &amp; Time</label>
+            <!-- Admin must set a future start date/time for the tournament. -->
+            <input type="datetime-local" id="tournamentStartTime" required />
+          </div>
+          <!-- Note for admins: no team selection here. Captains will join after the tournament is created. -->
+          <p id="tournamentInfo" style="color:#a3aed0; margin-bottom: 1rem;">
+            Once a tournament is created, captains will be able to register their teams for it. The bracket will
+            automatically update as teams join.
+          </p>
+          <div class="form-actions">
+            <button type="submit">Create Tournament</button>
+          </div>
+        </form>
+        <!-- Container where brackets for the active tournament will be rendered -->
+        <div id="bracketContainer"></div>
+        <!-- Container to show available tournaments and join buttons for captains -->
+        <div id="joinTournaments"></div>
+        <!-- Admin settings: ability to generate additional admin codes -->
+        <section id="admin-settings" style="display:none; margin-top:2rem;">
+          <h3>Admin Settings</h3>
+          <p>Generate additional admin codes to invite helpers.</p>
+          <button id="generateAdminCodeBtn" type="button">Generate Admin Code</button>
+          <div id="adminCodesList" style="margin-top:1rem;"></div>
+        </section>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
